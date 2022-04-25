@@ -1,7 +1,12 @@
+using LANMovie.Common;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+GlobalValues.AppConfig = AppConfig.Parse();
+
 
 /// <summary>
 /// ×¢²á·þÎñ

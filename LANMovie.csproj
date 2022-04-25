@@ -11,8 +11,9 @@
   <ItemGroup>
     <PackageReference Include="AntDesign" Version="0.10.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="6.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.4" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,10 +21,16 @@
     <Folder Include="Assets\Fonts\" />
     <Folder Include="Data\Databases\" />
     <Folder Include="Data\Logs\" />
+    <Folder Include="Data\Videos\Movies\" />
+    <Folder Include="Data\Videos\Teleplays\" />
+    <Folder Include="Data\Videos\ShortVideos\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Data\Videos\asxc.mp4">
+    <None Update="Data\Databases\LANMovies.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\Videos\videoNotFound.mp4">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

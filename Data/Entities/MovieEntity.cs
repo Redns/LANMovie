@@ -5,47 +5,54 @@ namespace LANMovie.Data.Entities
     public class MovieEntity
     {
         // 8位随机字符串
-        public string Id { get; set; } = string.Empty;
+        public string Id { get; set; }
 
         [DisplayName("名 称")]
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; }
 
         [DisplayName("简 介")]
-        public string Description { get; set; } = string.Empty;
+        public string Description { get; set; }
+
+        // 视频相对路径为 Data/Videos/Movies/{Id}/{VideoPath}
+        public string VideoPath { get; set; }
 
         [DisplayName("上传时间")]
-        public string UploadTime { get; set; } = string.Empty;
+        public string UploadTime { get; set; }
 
         [DisplayName("发布时间")]
-        public string PublishTime { get; set; } = string.Empty;
+        public string PublishTime { get; set; }
 
+        // 封面图片相对路径为 Data/Videos/Movies/{Id}/{Cover}
         [DisplayName("封 面")]
-        public string Cover { get; set; } = string.Empty;
+        public string Cover { get; set; }
+
+        public int RequestCount { get; set; }
 
         [DisplayName("导演")]
-        public string Director { get; set; } = string.Empty;
+        public string Director { get; set; }
 
         [DisplayName("类 型")]
-        public MovieCategory Category { get; set; } = MovieCategory.Other;
+        public MovieCategory Category { get; set; }
 
         [DisplayName("地 区")]
-        public string Area { get; set; } = string.Empty;
+        public string Area { get; set; }
 
         [DisplayName("时 长")]
-        public string Duration { get; set; } = string.Empty;
+        public string Duration { get; set; }
 
         [DisplayName("大 小")]
-        public string Size { get; set; } = string.Empty;
+        public string Size { get; set; }
 
-        public MovieEntity() { }
-        public MovieEntity(string id, string name, string description, string uploadTime, string publishTime, string cover, string director, MovieCategory category, string area, string duration, string size)
+        public MovieEntity(string id, string name, string description, string videoPath, string uploadTime, string publishTime, string cover, int requestCount, string director, MovieCategory category, string area, string duration, string size)
         {
             Id = id;
             Name = name;
             Description = description;
+            VideoPath = videoPath;
             UploadTime = uploadTime;
             PublishTime = publishTime;
             Cover = cover;
+            RequestCount = requestCount;
             Director = director;
             Category = category;
             Area = area;
