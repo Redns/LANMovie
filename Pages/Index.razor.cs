@@ -25,19 +25,9 @@ namespace LANMovie.Pages
         }
 
 
-        /// <summary>
-        /// 视频上传步骤跳转
-        /// </summary>
-        /// <param name="current">待跳转到的步骤(起始步骤为0)</param>
-        void ChangeStep(int current)
-        {
-            uploadStepCurrent = current;
-        }
-
-
         async Task OnFinish(EditContext editContext)
         {
-
+            uploadStepCurrent = 1;
         }
 
 
