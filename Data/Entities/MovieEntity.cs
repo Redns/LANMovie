@@ -5,44 +5,45 @@ namespace LANMovie.Data.Entities
     public class MovieEntity
     {
         // 8位随机字符串
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         [DisplayName("名 称")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         [DisplayName("简 介")]
-        public string Description { get; set; }
+        public string Description { get; set; } = string.Empty;
 
         // 视频相对路径为 Data/Videos/Movies/{Id}/{VideoPath}
-        public string VideoPath { get; set; }
+        public string VideoPath { get; set; } = string.Empty;
 
         [DisplayName("上传时间")]
-        public string UploadTime { get; set; }
+        public string UploadTime { get; set; } = string.Empty;
 
         [DisplayName("发布时间")]
-        public string PublishTime { get; set; }
+        public string PublishTime { get; set; } = string.Empty;
 
         // 封面图片相对路径为 Data/Videos/Movies/{Id}/{Cover}
         [DisplayName("封 面")]
-        public string Cover { get; set; }
+        public string Cover { get; set; } = string.Empty;
 
         public int RequestCount { get; set; }
 
         [DisplayName("导演")]
-        public string Director { get; set; }
+        public string Director { get; set; } = string.Empty;
 
         [DisplayName("类 型")]
-        public MovieCategory Category { get; set; }
+        public MovieCategory Category { get; set; } = MovieCategory.Other;
 
         [DisplayName("地 区")]
-        public string Area { get; set; }
+        public string Area { get; set; } = string.Empty;
 
         [DisplayName("时 长")]
-        public string Duration { get; set; }
+        public string Duration { get; set; } = string.Empty;
 
         [DisplayName("大 小")]
-        public string Size { get; set; }
+        public string Size { get; set; } = string.Empty;
 
+        public MovieEntity() { }
         public MovieEntity(string id, string name, string description, string videoPath, string uploadTime, string publishTime, string cover, int requestCount, string director, MovieCategory category, string area, string duration, string size)
         {
             Id = id;

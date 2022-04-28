@@ -1,7 +1,9 @@
 ﻿using LANMovie.Common;
 using LANMovie.Data.Access;
 using LANMovie.Data.Entities;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace LANMovie.Controllers
 {
@@ -9,26 +11,92 @@ namespace LANMovie.Controllers
     [ApiController]
     public class VideoController : Controller
     {
+        public const int HttpRangeMaxSize = 1024 * 1024;
+
+
         /// <summary>
         /// 获取电影视频
         /// </summary>
         /// <param name="movieId">电影ID</param>
         /// <returns></returns>
         [HttpGet("{movieId}")]
-        public async Task<IActionResult> GetMovie(string movieId)
+        public async Task GetMovie(string movieId)
         {
+            FileStream videoReadStream;
+            HttpResponse resp = HttpContext.Response;
+            
+            // 检索数据库中的电影
             using (var context = new OurDbContext())
             {
                 var sqlMovieData = new SqlMovieData(context);
-                var movie = await sqlMovieData.GetAsync(movieId);
-                if((movie != null) && (!string.IsNullOrEmpty(movie.VideoPath)))
+                var movie = sqlMovieData.Get(movieId);
+                if ((movie != null) && (!string.IsNullOrEmpty(movie.VideoPath)))
                 {
-                    movie.RequestCount++;
-                    await sqlMovieData.UpdateAsync(movie);
-
-                    return PhysicalFile($"{Directory.GetCurrentDirectory()}/Data/Videos/{movie.Id}/{movie.VideoPath}", $"video/{FileHelper.GetExtension(movie.VideoPath)}");
+                    videoReadStream = System.IO.File.OpenRead($"Data/Videos/Movies/{movie.VideoPath}");
                 }
-                return PhysicalFile($"{Directory.GetCurrentDirectory()}/Data/Videos/videoNotFound.mp4", "video/mp4");
+                else
+                {
+                    videoReadStream = System.IO.File.OpenRead($"Data/Videos/videoNotFound.mp4");
+                }
+            }
+
+            long rangeStart, rangeEnd, rangeSize;
+            var range = Request.Headers.Range.ToString().Trim().ToLower();
+            if (range.StartsWith("bytes=") && range.Contains('-'))
+            {
+                var ranges = range[6..].Split('-');
+
+                // 计算Range范围
+                rangeStart = int.Parse(ranges[0]);
+                if (!string.IsNullOrEmpty(ranges[1]))
+                {
+                    rangeEnd = int.Parse(ranges[1]);
+                }
+                else
+                {
+                    rangeEnd = videoReadStream.Length - 1;
+                }
+
+                // 判断Range尺寸是否超出限制
+                rangeSize = rangeEnd - rangeStart + 1;
+                if (rangeSize > HttpRangeMaxSize)
+                {
+                    rangeEnd = rangeStart + HttpRangeMaxSize - 1;
+                    rangeSize = HttpRangeMaxSize;
+                }
+
+                // 修改Header中的Range
+                if (!resp.HasStarted)
+                {
+                    resp.Headers.Add("Content-Range", $"bytes {rangeStart}-{rangeEnd}/{videoReadStream.Length}");
+                    resp.Headers.Add("Content-Length", rangeSize.ToString());
+                    resp.Headers.ContentType = "video/mp4";
+
+                    // 若返回整个文件则响应200, 否则响应206
+                    if ((rangeStart == 0) && (rangeEnd + 1) >= videoReadStream.Length)
+                    {
+                        resp.StatusCode = 200;
+                    }
+                    else
+                    {
+                        resp.StatusCode = 206;
+                    }
+                }
+
+                // 读取数据流至数组
+                byte[] videoBuffer = new byte[HttpRangeMaxSize];
+                videoReadStream.Seek(rangeStart, SeekOrigin.Begin);
+                int readLen = videoReadStream.Read(videoBuffer, 0, videoBuffer.Length);
+
+                // 写入响应
+                var syncIOFeature = HttpContext.Features.Get<IHttpBodyControlFeature>();
+                if (syncIOFeature != null)
+                {
+                    syncIOFeature.AllowSynchronousIO = true;
+                }
+                await resp.Body.WriteAsync(videoBuffer.AsMemory(0, readLen));
+                await videoReadStream.FlushAsync();
+                await videoReadStream.DisposeAsync();
             }
         }
 
@@ -48,10 +116,7 @@ namespace LANMovie.Controllers
                 {
                     return new ApiResult<MovieEntity?>(ApiResultCode.Success, $"Get {movie.Name}'s information success", movie);
                 }
-                else
-                {
-                    return new ApiResult<MovieEntity?>(ApiResultCode.ResourceNotFound, "Video not exist", null);
-                }
+                return new ApiResult<MovieEntity?>(ApiResultCode.ResourceNotFound, "Video not exist", null);
             }
         }
 
@@ -80,12 +145,41 @@ namespace LANMovie.Controllers
                         }
                         return new ApiResult<MovieEntity?>(ApiResultCode.Success, $"Remove {movie.Name} success", movie);
                     }
-                    else
-                    {
-                        return new ApiResult<MovieEntity?>(ApiResultCode.ServerError, $"Remove {movie.Name} failed", movie);
-                    }
+                    return new ApiResult<MovieEntity?>(ApiResultCode.ServerError, $"Remove {movie.Name} failed", movie);
                 }
                 return new ApiResult<MovieEntity?>(ApiResultCode.ResourceNotFound, "Video not exist", null);
+            }
+        }
+
+
+        /// <summary>
+        /// 修改电影信息
+        /// </summary>
+        /// <param name="movieId">待修改电影的ID</param>
+        /// <returns></returns>
+        [HttpPost("{movieId}/i")]
+        public async Task<ApiResult<MovieEntity?>> UpdateMovieInfo(string movieId, [FromBody]MovieEntity newMovie)
+        {
+            using(var context = new OurDbContext())
+            {
+                var sqlMovieData = new SqlMovieData(context);
+                var oldMovie = await sqlMovieData.GetAsync(movieId);
+                if(oldMovie != null)
+                {
+                    oldMovie.Name = newMovie.Name;
+                    oldMovie.Description = newMovie.Description;
+                    oldMovie.PublishTime = newMovie.PublishTime;
+                    oldMovie.Director = newMovie.Director;
+                    oldMovie.Category = newMovie.Category;
+                    oldMovie.Area = newMovie.Area;
+
+                    if(await sqlMovieData.UpdateAsync(oldMovie))
+                    {
+                        return new ApiResult<MovieEntity?>(ApiResultCode.Success, "Update movie's information success", oldMovie);
+                    }
+                    return new ApiResult<MovieEntity?>(ApiResultCode.ServerError, "Update movie's information failed", null);
+                }
+                return new ApiResult<MovieEntity?>(ApiResultCode.ResourceNotFound, "Movie not exist", null);
             }
         }
 

@@ -1,7 +1,134 @@
 ﻿@page "/"
+@using LANMovie.Data.Entities
 
-<PageTitle>Index</PageTitle>
+<PageTitle>首 页</PageTitle>
 
- <video width="320" height="240" controls>
-   <source src="/api/video/asxc.mp4" type="video/mp4">
- </video>
+<style>
+    #form-movieInfo::-webkit-scrollbar {
+        display: none;
+        overflow:scroll;
+        overflow-x:hidden;
+    }
+    #textArea-movieDescription::-webkit-scrollbar {
+        display: none;
+        overflow:scroll;
+        overflow-x:hidden;
+    }
+</style>
+
+@if (emptyShown)
+{
+    <Empty Image="images/movie.svg"
+           ImageStyle='@("height: 80px")'
+           Style="position:center; height:100%; margin-top:20%;">
+        <DescriptionTemplate>
+        </DescriptionTemplate>
+        <ChildContent>
+            <Space>
+                <SpaceItem>
+                    <Select @bind-Value="@uploadVideoCategory"
+                            DefaultValue="@VideoCategory.Movie"
+		                    TItemValue="VideoCategory"
+                            TItem="string"
+                            LabelInValue="true"
+		                    Style="width: 90px;">
+		                <SelectOptions>
+			                <AntDesign.SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.Movie Label="电 影"/>
+                            <AntDesign.SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.Teleplay Label="电视剧"/>
+                            <AntDesign.SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.ShortVideo Label="短视频"/>
+		                </SelectOptions>
+                    </Select>
+                </SpaceItem>
+                <SpaceItem>
+                    <Button type="@AntDesign.ButtonType.Primary" OnClick=@OpenUploadStep Style="width:120px;">上 传</Button>
+                </SpaceItem>
+            </Space>
+        </ChildContent>
+    </Empty>
+}
+else
+{
+    <Steps Current=uploadStepCurrent OnChange=ChangeStep Style="position:center; width:95%; margin:auto;">
+        <Step Title="Step1" Description="填写视频信息" Icon="form"/>
+        <Step Title="Step2" Description="上传文件" Icon="cloud-upload"/>
+        <Step Title="Step3" Description="完 成" Icon="smile"/>
+    </Steps>
+    @if(uploadVideoCategory == VideoCategory.Movie)
+        {
+            if(uploadStepCurrent == 0)
+            {
+                <Form Model="@movie" 
+                      LabelColSpan="9"
+                      WrapperColSpan="15"
+                      OnFinish="OnFinish" 
+                      OnFinishFailed="OnFinishFailed"
+                      Style="margin-top:50px; max-height:500px; overflow:scroll;
+                             overflow-x:hidden; -webkit-text-stroke-color:Background" 
+                      Id="form-movieInfo">
+                      <FormItem Label="名 称" Required>
+                            <Input @bind-Value="@movie.Name" Style="width:260px; border-radius:5px;"/>
+                      </FormItem>
+                      <FormItem Label="上映时间" Required>
+                          <DatePicker @bind-Value="@publishDate" TValue="DateTime" Picker="@DatePickerType.Year" Style="width:100%; max-width:260px; border-radius:5px;"/>
+                      </FormItem>
+                      <FormItem Label="类 型">
+                            <Select @bind-Value="@movie.Category"
+                                    DefaultValue="@MovieCategory.Other"
+		                            TItemValue="MovieCategory"
+                                    TItem="string"
+                                    LabelInValue="true"
+		                            Style="width:260px; border-radius:5px;">
+		                        <SelectOptions>
+			                        <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Drama Label="情 节"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Comedy Label="喜 剧"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Romantic Label="爱 情"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Action Label="动 作"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.MartialArts Label="武 侠"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.KungFu Label="功 夫"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.War Label="战 争"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Thrill Label="悬 疑"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Horror Label="恐 怖"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Fantasy Label="神 幻"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Scifi Label="科 幻"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Ghost Label="鬼 片"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.NewYearCelebration Label="贺 岁"/>
+                                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Other Label="其 它"/>
+		                        </SelectOptions>
+                            </Select>
+                      </FormItem>
+                      <FormItem Label="简 介" Required>
+                          <TextArea @bind-Value="@movie.Description" Id="textArea-movieDescription" Style="width:260px; height:120px; border-radius:5px;" DefaultToEmptyString=true/>
+                      </FormItem>
+                      <FormItem Label="导 演" Required>
+                          <Input @bind-Value="@movie.Director" Style="width:260px; border-radius:5px;"/>
+                      </FormItem>
+                      <FormItem Label="地 区" Required>
+                          <Input @bind-Value="@movie.Area" Style="width:260px; border-radius:5px;"/>
+                      </FormItem>
+                </Form>
+        }
+        else if(uploadStepCurrent == 1)
+        {
+            <InputFile class="form-control" multiple accept='image/*' Style="width:260px;"/>
+        }
+        else
+        {
+            <Result Status="success"
+                    Title="Successfully Purchased Cloud Server ECS!"
+                    SubTitle="Order number: 2017182818828182881 Cloud server configuration takes 1-5 minutes, please wait.">
+                <Extra>
+                    <AntDesign.Button Type="primary">Go Console</AntDesign.Button>
+                    <AntDesign.Button>Buy Again</AntDesign.Button>
+                </Extra>
+            </Result>
+        }
+    }
+    else if(uploadVideoCategory == VideoCategory.Teleplay)
+    {
+            
+    }
+    else
+    {
+            
+    }
+}
