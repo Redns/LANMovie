@@ -22,6 +22,7 @@
         <DescriptionTemplate>
         </DescriptionTemplate>
         <ChildContent>
+            <br/>
             <Space>
                 <SpaceItem>
                     <Select @bind-Value="@uploadVideoCategory"
@@ -31,14 +32,14 @@
                             LabelInValue="true"
 		                    Style="width: 90px;">
 		                <SelectOptions>
-			                <AntDesign.SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.Movie Label="电 影"/>
-                            <AntDesign.SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.Teleplay Label="电视剧"/>
-                            <AntDesign.SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.ShortVideo Label="短视频"/>
+			                <SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.Movie Label="电 影"/>
+                            <SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.Teleplay Label="电视剧"/>
+                            <SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.ShortVideo Label="短视频"/>
 		                </SelectOptions>
                     </Select>
                 </SpaceItem>
                 <SpaceItem>
-                    <Button type="@AntDesign.ButtonType.Primary" OnClick=@OpenUploadStep Style="width:120px;">上 传</Button>
+                    <Button type="@AntDesign.ButtonType.Primary" OnClick="(() => { emptyShown = false; })" Style="width:120px;">上 传</Button>
                 </SpaceItem>
             </Space>
         </ChildContent>
@@ -123,15 +124,16 @@ else
         {
             <div style="position:center; width:95%; max-width:500px; margin:auto;">
                 <p Style="margin-top:80px;">封 面</p>
-                <InputFile class="form-control" accept='image/*'/>
+                <InputFile class="form-control" accept='image/*' OnChange="((e) => { uploadMovieCover = e.GetMultipleFiles()[0]; })"/>
                 <p Style="margin-top:40px;">视 频</p>
-                <InputFile class="form-control" accept='video/*'/>
+                <InputFile class="form-control" accept='video/*' OnChange="((e) => { uploadMovie = e.GetMultipleFiles()[0]; })"/>
+                <Progress Percent=@ProgressPercent StrokeWidth=progress_stroke_width ShowInfo=progress_showInfo/>
                 <Space Style="margin-top:30px;">
                     <SpaceItem>
                         <Button Type="@ButtonType.Primary" OnClick="(() => { uploadStepCurrent--; })" Style="border-radius:5px;">上一步</Button>
                     </SpaceItem>
                     <SpaceItem>
-                        <Button Type="@ButtonType.Primary" OnClick="(() => { uploadStepCurrent++; })" Style="border-radius:5px;">提 交</Button>
+                        <Button Type="@ButtonType.Primary" OnClick=@UploadMovie Style="border-radius:5px;">提 交</Button>
                     </SpaceItem>
                 </Space>
             </div>
@@ -139,10 +141,10 @@ else
         else
         {
             <Result Status="success"
-                    Title="视频添加成功!"
-                    SubTitle="视频存储路径为: Data/Videos/Movies/AH6YSA, 大小为1.9G, 总时长为126:46">
+                    Title=@($"视频添加成功!")
+                    SubTitle=@($"视频存储路径为 Data/Videos/Movies/{movie.Id}/{movie.VideoPath}, 视频大小为 {movie.Size}")>
                 <Extra>
-                    <AntDesign.Button Type="primary" Style="border-radius:5px;">前往观影</AntDesign.Button>
+                    <AntDesign.Button Type="primary" Style="border-radius:5px;" OnClick=@(() => { NavigationManager.NavigateTo($"playvideo/movie/{movie.Id}"); })>前往观影</AntDesign.Button>
                     <AntDesign.Button Style="border-radius:5px;" OnClick=NavToUpload>再次上传</AntDesign.Button>
                 </Extra>
                 @code{

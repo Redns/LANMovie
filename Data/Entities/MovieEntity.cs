@@ -26,8 +26,6 @@ namespace LANMovie.Data.Entities
         [DisplayName("封 面")]
         public string Cover { get; set; } = string.Empty;
 
-        public int RequestCount { get; set; }
-
         [DisplayName("导演")]
         public string Director { get; set; } = string.Empty;
 
@@ -37,14 +35,11 @@ namespace LANMovie.Data.Entities
         [DisplayName("地 区")]
         public string Area { get; set; } = string.Empty;
 
-        [DisplayName("时 长")]
-        public string Duration { get; set; } = string.Empty;
-
         [DisplayName("大 小")]
         public string Size { get; set; } = string.Empty;
 
         public MovieEntity() { }
-        public MovieEntity(string id, string name, string description, string videoPath, string uploadTime, string publishTime, string cover, int requestCount, string director, MovieCategory category, string area, string duration, string size)
+        public MovieEntity(string id, string name, string description, string videoPath, string uploadTime, string publishTime, string cover, string director, MovieCategory category, string area, string size)
         {
             Id = id;
             Name = name;
@@ -53,11 +48,9 @@ namespace LANMovie.Data.Entities
             UploadTime = uploadTime;
             PublishTime = publishTime;
             Cover = cover;
-            RequestCount = requestCount;
             Director = director;
             Category = category;
             Area = area;
-            Duration = duration;
             Size = size;
         }
     }

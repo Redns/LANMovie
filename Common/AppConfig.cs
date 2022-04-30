@@ -55,10 +55,12 @@ namespace LANMovie.Common
     public class DataConfig
     {
         public DatabaseConfig Database { get; set; }
+        public VideoConfig Video { get; set; }
 
-        public DataConfig(DatabaseConfig database)
+        public DataConfig(DatabaseConfig database, VideoConfig video)
         {
             Database = database;
+            Video = video;
         }
     }
 
@@ -69,6 +71,28 @@ namespace LANMovie.Common
         public DatabaseConfig(string connStr)
         {
             ConnStr = connStr;
+        }
+    }
+
+    public class VideoConfig
+    {
+        public MovieConfig Movie { get; set; }
+
+        public VideoConfig(MovieConfig movie)
+        {
+            Movie = movie;
+        }
+    }
+
+    public class MovieConfig
+    {
+        public long CoverMaxSize { get; set; }      // 封面最大尺寸(单位：Byte)
+        public long MaxSize { get; set; }           // 电影视频最大尺寸(单位：Byte)
+
+        public MovieConfig(long coverMaxSize, long maxSize)
+        {
+            CoverMaxSize = coverMaxSize;
+            MaxSize = maxSize;
         }
     }
 }

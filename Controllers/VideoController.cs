@@ -19,7 +19,7 @@ namespace LANMovie.Controllers
         /// </summary>
         /// <param name="movieId">电影ID</param>
         /// <returns></returns>
-        [HttpGet("{movieId}")]
+        [HttpGet("movie/{movieId}")]
         public async Task GetMovie(string movieId)
         {
             FileStream videoReadStream;
@@ -32,71 +32,96 @@ namespace LANMovie.Controllers
                 var movie = sqlMovieData.Get(movieId);
                 if ((movie != null) && (!string.IsNullOrEmpty(movie.VideoPath)))
                 {
-                    videoReadStream = System.IO.File.OpenRead($"Data/Videos/Movies/{movie.VideoPath}");
+                    videoReadStream = System.IO.File.OpenRead($"Data/Videos/Movies/{movie.Id}/{movie.VideoPath}");
                 }
                 else
                 {
                     videoReadStream = System.IO.File.OpenRead($"Data/Videos/videoNotFound.mp4");
                 }
-            }
 
-            long rangeStart, rangeEnd, rangeSize;
-            var range = Request.Headers.Range.ToString().Trim().ToLower();
-            if (range.StartsWith("bytes=") && range.Contains('-'))
-            {
-                var ranges = range[6..].Split('-');
-
-                // 计算Range范围
-                rangeStart = int.Parse(ranges[0]);
-                if (!string.IsNullOrEmpty(ranges[1]))
+                // 根据Range返回视频片段
+                long rangeStart, rangeEnd, rangeSize;
+                var range = Request.Headers.Range.ToString().Trim().ToLower();
+                if (range.StartsWith("bytes=") && range.Contains('-'))
                 {
-                    rangeEnd = int.Parse(ranges[1]);
-                }
-                else
-                {
-                    rangeEnd = videoReadStream.Length - 1;
-                }
+                    var ranges = range[6..].Split('-');
 
-                // 判断Range尺寸是否超出限制
-                rangeSize = rangeEnd - rangeStart + 1;
-                if (rangeSize > HttpRangeMaxSize)
-                {
-                    rangeEnd = rangeStart + HttpRangeMaxSize - 1;
-                    rangeSize = HttpRangeMaxSize;
-                }
-
-                // 修改Header中的Range
-                if (!resp.HasStarted)
-                {
-                    resp.Headers.Add("Content-Range", $"bytes {rangeStart}-{rangeEnd}/{videoReadStream.Length}");
-                    resp.Headers.Add("Content-Length", rangeSize.ToString());
-                    resp.Headers.ContentType = "video/mp4";
-
-                    // 若返回整个文件则响应200, 否则响应206
-                    if ((rangeStart == 0) && (rangeEnd + 1) >= videoReadStream.Length)
+                    // 计算Range范围
+                    rangeStart = int.Parse(ranges[0]);
+                    if (!string.IsNullOrEmpty(ranges[1]))
                     {
-                        resp.StatusCode = 200;
+                        rangeEnd = int.Parse(ranges[1]);
                     }
                     else
                     {
-                        resp.StatusCode = 206;
+                        rangeEnd = videoReadStream.Length - 1;
                     }
+
+                    // 判断Range尺寸是否超出限制
+                    rangeSize = rangeEnd - rangeStart + 1;
+                    if (rangeSize > HttpRangeMaxSize)
+                    {
+                        rangeEnd = rangeStart + HttpRangeMaxSize - 1;
+                        rangeSize = HttpRangeMaxSize;
+                    }
+
+                    // 修改Header中的Range
+                    if (!resp.HasStarted)
+                    {
+                        resp.Headers.Add("Content-Range", $"bytes {rangeStart}-{rangeEnd}/{videoReadStream.Length}");
+                        resp.Headers.Add("Content-Length", rangeSize.ToString());
+                        resp.Headers.ContentType = "video/mp4";
+
+                        // 若返回整个文件则响应200, 否则响应206
+                        if ((rangeStart == 0) && (rangeEnd + 1) >= videoReadStream.Length)
+                        {
+                            resp.StatusCode = 200;
+                        }
+                        else
+                        {
+                            resp.StatusCode = 206;
+                        }
+                    }
+
+                    // 读取数据流至数组
+                    byte[] videoBuffer = new byte[HttpRangeMaxSize];
+                    videoReadStream.Seek(rangeStart, SeekOrigin.Begin);
+                    int readLen = videoReadStream.Read(videoBuffer, 0, videoBuffer.Length);
+
+                    // 写入响应
+                    var syncIOFeature = HttpContext.Features.Get<IHttpBodyControlFeature>();
+                    if (syncIOFeature != null)
+                    {
+                        syncIOFeature.AllowSynchronousIO = true;
+                    }
+                    await resp.Body.WriteAsync(videoBuffer.AsMemory(0, readLen));
+                    await videoReadStream.FlushAsync();
+                    await videoReadStream.DisposeAsync();
                 }
+            }
+        }
 
-                // 读取数据流至数组
-                byte[] videoBuffer = new byte[HttpRangeMaxSize];
-                videoReadStream.Seek(rangeStart, SeekOrigin.Begin);
-                int readLen = videoReadStream.Read(videoBuffer, 0, videoBuffer.Length);
 
-                // 写入响应
-                var syncIOFeature = HttpContext.Features.Get<IHttpBodyControlFeature>();
-                if (syncIOFeature != null)
+        /// <summary>
+        /// 下载电影
+        /// </summary>
+        /// <param name="movieId"></param>
+        /// <returns></returns>
+        [HttpGet("movie/{movieId}/d")]
+        public IActionResult DownloadMovie(string movieId)
+        {
+            using (var context = new OurDbContext())
+            {
+                var sqlMovieData = new SqlMovieData(context);
+                var movie = sqlMovieData.Get(movieId);
+                if ((movie != null) && (!string.IsNullOrEmpty(movie.VideoPath)))
                 {
-                    syncIOFeature.AllowSynchronousIO = true;
+                    return new PhysicalFileResult($"{Directory.GetCurrentDirectory()}/Data/Videos/Movies/{movie.Id}/{movie.VideoPath}", $"video/{FileHelper.GetExtension(movie.VideoPath)}");
                 }
-                await resp.Body.WriteAsync(videoBuffer.AsMemory(0, readLen));
-                await videoReadStream.FlushAsync();
-                await videoReadStream.DisposeAsync();
+                else
+                {
+                    return new PhysicalFileResult($"{Directory.GetCurrentDirectory()}/Data/Videos/videoNotFound.mp4", $"video/mp4");
+                }
             }
         }
 
@@ -106,7 +131,7 @@ namespace LANMovie.Controllers
         /// </summary>
         /// <param name="movieId">电影ID</param>
         /// <returns></returns>
-        [HttpGet("{movieId}/i")]
+        [HttpGet("movie/{movieId}/i")]
         public async Task<ApiResult<MovieEntity?>> GetMovieInfo(string movieId)
         {
             using(var context = new OurDbContext())
@@ -126,7 +151,7 @@ namespace LANMovie.Controllers
         /// </summary>
         /// <param name="movieId"></param>
         /// <returns></returns>
-        [HttpDelete("{movieId}")]
+        [HttpDelete("movie/{movieId}")]
         public async Task<ApiResult<MovieEntity?>> RemoveMovie(string movieId)
         {
             using(var context = new OurDbContext())
@@ -141,7 +166,7 @@ namespace LANMovie.Controllers
                         // 避免删除数据库数据失败后, 无法找回原视频的Bug
                         if (Directory.Exists($"Data/Videos/Movies/{movie.Id}"))
                         {
-                            Directory.Delete($"Data/Videos/Movies/{movie.Id}");
+                            Directory.Delete($"Data/Videos/Movies/{movie.Id}", true);
                         }
                         return new ApiResult<MovieEntity?>(ApiResultCode.Success, $"Remove {movie.Name} success", movie);
                     }
@@ -157,7 +182,7 @@ namespace LANMovie.Controllers
         /// </summary>
         /// <param name="movieId">待修改电影的ID</param>
         /// <returns></returns>
-        [HttpPost("{movieId}/i")]
+        [HttpPost("movie/{movieId}/i")]
         public async Task<ApiResult<MovieEntity?>> UpdateMovieInfo(string movieId, [FromBody]MovieEntity newMovie)
         {
             using(var context = new OurDbContext())
@@ -190,7 +215,7 @@ namespace LANMovie.Controllers
         /// <param name="teleId">电视剧ID</param>
         /// <param name="telePage">电视剧集数</param>
         /// <returns></returns>
-        [HttpGet("{teleId}/{telePage}")]
+        [HttpGet("tele/{teleId}/{telePage}")]
         public IActionResult GetTeleplay(string teleId, string telePage)
         {
             return PhysicalFile($"{Directory.GetCurrentDirectory()}/Data/Videos/{teleId}/{telePage}", "video/mp4");
@@ -202,7 +227,7 @@ namespace LANMovie.Controllers
         /// </summary>
         /// <param name="shortVideoId"></param>
         /// <returns></returns>
-        [HttpGet("{shortVideoId}/sv")]
+        [HttpGet("sv/{shortVideoId}")]
         public IActionResult GetShortVideo(string shortVideoId)
         {
             return PhysicalFile($"{Directory.GetCurrentDirectory()}/Data/Videos/{shortVideoId}", "video/mp4");

@@ -1,5 +1,60 @@
 ﻿@page "/movies"
+@using LANMovie.Common
 
- <video width="320" height="240" controls>
-   <source src="/api/video/asxac.mp4" type="video/mp4">
- </video>
+@inject IJSRuntime JS
+@inject MessageService _message
+@inject NotificationService _notice
+@inject NavigationManager NavigationManager
+
+@if (!movies.Any())
+{
+    <Empty Image="api/image/movie/imageNotFound"
+           ImageStyle='@("height: 80px")'
+           Style="position:center; transform:translateY(100%);">
+        <DescriptionTemplate>
+            没有可供播放的资源，点击上传吧 ~
+        </DescriptionTemplate>
+        <ChildContent>
+            <Button type="@ButtonType.Primary" OnClick=@(() => NavigationManager.NavigateTo("", true)) Style="width:120px;">上 传</Button>
+        </ChildContent>
+    </Empty>
+}
+else
+{
+    <Drawer Visible="@drawerVisiable" Placement="top" Title='($"{movieSelected?.Name} {movieSelected?.PublishTime} ({movieSelected?.PublishTime})")' OnClose="_ => drawerVisiable = false">
+        导 演：@(movieSelected?.Director ?? "未 知")
+        <br/>
+        类 型：@(movieSelected?.Category.ToString() ?? "其 它")
+        <br/>
+        简 介：@(movieSelected?.Description ?? "暂无简介 ~")
+        <br/>
+        大 小：@(movieSelected?.Size ?? "未 知")
+    </Drawer>
+    <AntList Grid="grid" DataSource="@movies" Style="overflow:scroll; overflow-x:hidden; height:550px;" Id="imageCard">
+        <ListItem>
+            <Card Bordered  Hoverable 
+                    Actions="@(new[] {
+                        actionSetting(() => { movieSelected = context; drawerVisiable = true; }) ,
+                        actionEdit(async ()=> await DownloadFile($"{NavigationManager.BaseUri}api/video/movie/{context.Id}/d", $"{context.Name}.{FileHelper.GetExtension(context.VideoPath)}")),
+                        actionEllipsis(async ()=> await RemoveMovie(context)) })"
+                    Style="border-radius:10px;">
+                    <Cover>
+                        <AntDesign.Image alt="cover" Src=@($"api/image/movie/{context.Id}") Width=240 Height=165 Preview=false OnClick=@((args) => { NavigationManager.NavigateTo($"playvideo/movie/{context.Id}"); })/>
+                    </Cover>
+            </Card>
+        </ListItem>
+    </AntList>
+}
+
+@code
+{
+    RenderFragment actionSetting(Action clickAction) =>@<Icon Type="info-circle" OnClick="@clickAction" />;
+    RenderFragment actionEdit(Action clickAction) =>@<Icon Type="download" OnClick="@clickAction" />;
+    RenderFragment actionEllipsis(Action clickAction) => @<Icon Type="delete" OnClick="@clickAction" />;
+}
+
+<style>
+    #imageCard::-webkit-scrollbar {
+        display: none;
+    }
+</style>
