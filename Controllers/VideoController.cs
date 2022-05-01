@@ -30,7 +30,7 @@ namespace LANMovie.Controllers
             {
                 var sqlMovieData = new SqlMovieData(context);
                 var movie = sqlMovieData.Get(movieId);
-                if ((movie != null) && (!string.IsNullOrEmpty(movie.VideoPath)))
+                if ((movie != null) && (!string.IsNullOrEmpty(movie.VideoPath)) && System.IO.File.Exists($"Data/Videos/Movies/{movie.Id}/{movie.VideoPath}"))
                 {
                     videoReadStream = System.IO.File.OpenRead($"Data/Videos/Movies/{movie.Id}/{movie.VideoPath}");
                 }
@@ -70,7 +70,7 @@ namespace LANMovie.Controllers
                     {
                         resp.Headers.Add("Content-Range", $"bytes {rangeStart}-{rangeEnd}/{videoReadStream.Length}");
                         resp.Headers.Add("Content-Length", rangeSize.ToString());
-                        resp.Headers.ContentType = "video/mp4";
+                        resp.Headers.ContentType = $"video/{FileHelper.GetExtension(movie?.VideoPath ?? "mp4")}";
 
                         // 若返回整个文件则响应200, 否则响应206
                         if ((rangeStart == 0) && (rangeEnd + 1) >= videoReadStream.Length)

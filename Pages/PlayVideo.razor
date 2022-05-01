@@ -7,9 +7,8 @@
 	if((videoType == "movie") && (routeUrls.Length == 2))
 	{
 		// 播放电影时格式为movie/{movieId}
-		var movieId = routeUrls[1];
-		<video style="width:90%; max-width:600px;" controls>
-			<source src=@($"/api/video/movie/{movieId}") type="video/mp4">
+		<video autoplay controls controlslist="nodownload" style="width:90%; max-width:600px;">
+			<source src=@($"/api/video/movie/{routeUrls[1]}")>
 		</video>
 	}
 	else if((videoType == "teleplay") && (routeUrls.Length == 3))

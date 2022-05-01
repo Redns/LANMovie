@@ -10,8 +10,6 @@ namespace LANMovie.Pages
 {
     partial class Movies
     {
-        bool drawerVisiable = false;
-
         // 卡片视图时相关参数
         readonly ListGridType grid = new()
         {
@@ -22,8 +20,6 @@ namespace LANMovie.Pages
             Xxl = 4,        // ≥ 1600px 展示的列数 
         };
 
-        // 电影
-        MovieEntity? movieSelected;
         MovieEntity[] movies = Array.Empty<MovieEntity>();      
 
 

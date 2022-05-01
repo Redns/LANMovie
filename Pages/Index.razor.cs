@@ -45,6 +45,34 @@ namespace LANMovie.Pages
         readonly MovieConfig movieConfig = GlobalValues.AppConfig?.Data.Video.Movie ?? new MovieConfig(10*1024*1024, 1*1024*1024*1024);
 
 
+        protected async override Task OnInitializedAsync()
+        {
+            string host = NavigationManager.BaseUri;
+            if (!host.Contains("localhost") && !host.Contains("127.0.0.1"))
+            {
+                if (File.Exists("wwwroot/connect.png"))
+                {
+                    if(QRCoderHelper.QRDecoder("wwwroot/connect.png") != host)
+                    {
+                        File.Delete("wwwroot/connect.png");
+                        QRCoderHelper.QRCoder(host, "wwwroot/connect.png", "", 5);
+                    }
+                }
+                else
+                {
+                    QRCoderHelper.QRCoder(host, "wwwroot/connect.png", "", 5);
+                }
+            }
+            else
+            {
+                if (!File.Exists("wwwroot/connect.png"))
+                {
+                    QRCoderHelper.QRCoder("当使用 localhost/127.0.0.1 访问时，系统不会生成连接二维码!", "wwwroot/connect.png", "", 5);
+                }
+            }
+            await base.OnInitializedAsync();
+        }
+
         /// <summary>
         /// 上传电影
         /// </summary>
@@ -56,25 +84,41 @@ namespace LANMovie.Pages
             var uploadMovieExt = FileHelper.GetExtension(uploadMovie?.Name ?? "");
             var uploadMovieCoverExt = FileHelper.GetExtension(uploadMovieCover?.Name ?? "");
 
-            // 上传封面(路径为 Data/Videos/Movies/{uploadDir}/{cover.xxx})
-            using (var movieCoverWriter = new FileStream($"Data/Videos/Movies/{uploadDir}/cover.{uploadMovieCoverExt}", FileMode.Create))
+            // 上传封面
+            // 路径为 Data/Videos/Movies/{uploadDir}/{cover.xxx}
+            using (var movieCoverReader = uploadMovieCover?.OpenReadStream(movieConfig.CoverMaxSize))
             {
-                using (var movieCoverReader = uploadMovieCover?.OpenReadStream(movieConfig.CoverMaxSize))
+                if(movieCoverReader != null)
                 {
-                    if(movieCoverReader != null)
+                    // 拷贝图片至 cover_temp，准备裁剪 + 水印
+                    using (var movieCoverWriter = new FileStream($"Data/Videos/Movies/{uploadDir}/cover_temp.{uploadMovieCoverExt}", FileMode.Create))
                     {
                         await movieCoverReader.CopyToAsync(movieCoverWriter);
+                        await movieCoverWriter.FlushAsync();
                     }
+
+                    // 裁剪图片尺寸至 1920*1080
+                    using (var resizeCoverImage = ImageHelper.ImageCut($"Data/Videos/Movies/{uploadDir}/cover_temp.{uploadMovieCoverExt}"))
+                    {
+                        // 为图片添加水印
+                        if (resizeCoverImage != null)
+                        {
+                            ImageHelper.ImageWaterMark(resizeCoverImage, $"{movie.Name} {publishDate.Year}", leftEdge: 50, bottomEdge: 140, fontSize:80)
+                                       .WriteToFile($"Data/Videos/Movies/{uploadDir}/cover.{uploadMovieCoverExt}");
+                        }
+                    }
+
+                    File.Delete($"Data/Videos/Movies/{uploadDir}/cover_temp.{uploadMovieCoverExt}");
                 }
-                await movieCoverWriter.FlushAsync();
             }
 
-            // 上传视频(路径为 Data/Videos/Movies/{uploadDir}/{src.xxx})
-            using (var movieWriter = new FileStream($"Data/Videos/Movies/{uploadDir}/src.{uploadMovieExt}", FileMode.Create))
+            // 上传视频
+            // 路径为 Data/Videos/Movies/{uploadDir}/{src.xxx}
+            using(var movieReader = uploadMovie?.OpenReadStream(movieConfig.MaxSize))
             {
-                using(var movieReader = uploadMovie?.OpenReadStream(movieConfig.MaxSize))
+                if(movieReader != null)
                 {
-                    if(movieReader != null)
+                    using (var movieWriter = new FileStream($"Data/Videos/Movies/{uploadDir}/src.{uploadMovieExt}", FileMode.Create))
                     {
                         int readLen;
                         long readLenTotal = 0;
@@ -89,11 +133,15 @@ namespace LANMovie.Pages
 
                             // 更新进度条
                             ProgressPercent = (int)(readLenTotal * 100.0 / lenTotal);
-                            await InvokeAsync(() => StateHasChanged());
+                            if (ProgressPercent % 5 == 0)
+                            {
+                                await InvokeAsync(() => StateHasChanged());
+                            }
                         }
+
+                        await movieWriter.FlushAsync();
                     }
                 }
-                await movieWriter.FlushAsync();
             }
 
             // 添加至数据库
@@ -107,7 +155,7 @@ namespace LANMovie.Pages
                 movie.PublishTime = publishDate.Year.ToString();
                 movie.Cover = $"cover.{uploadMovieCoverExt}";
                 movie.Size = FileHelper.RebuildFileSize(uploadMovie?.Size ?? 0);
-                await sqlMovieData.AddAsync(movie);
+                _ = sqlMovieData.AddAsync(movie);
             }
 
             uploadStepCurrent++;
