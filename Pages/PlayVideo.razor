@@ -1,31 +1,104 @@
 ﻿@page "/playvideo/{*videoId}"
 
-@if (!string.IsNullOrEmpty(VideoId))
+@using LANMovie.Data.Access
+@using LANMovie.Data.Entities
+
+@inject NavigationManager NavigationManager
+
+@if (videoCategory == VideoCategory.Movie)
 {
-	var routeUrls = VideoId.Split("/");
-	var videoType = routeUrls[0];
-	if((videoType == "movie") && (routeUrls.Length == 2))
+	if(movie != null)
 	{
-		// 播放电影时格式为movie/{movieId}
-		<video autoplay controls controlslist="nodownload" style="width:90%; max-width:600px;">
-			<source src=@($"/api/video/movie/{routeUrls[1]}")>
-		</video>
-	}
-	else if((videoType == "teleplay") && (routeUrls.Length == 3))
-	{
-		// 播放电视剧时格式为teleplay/{teleId}/{telePage}
-	}
-	else if((videoType == "shortvideo") && (routeUrls.Length == 2))
-	{
-		// 播放短视频时格式为sv/{svId}
+		<Space Direction="DirectionVHType.Vertical" Style="overflow:scroll; overflow-x:hidden; height:100%; max-height:650px;" Id="list">
+			<SpaceItem>
+				<Space Direction="DirectionVHType.Vertical" Style="width:90%; margin-left:5%;">
+					<SpaceItem>
+						<Popover ContentTemplate="@_content" Placement=@Placement.RightBottom>
+							<h3 style="cursor:pointer; color:#1890ff;">@($"{movie?.Name} ({movie?.PublishTime})")</h3>
+						</Popover>
+						@code
+						{
+							RenderFragment _content = @<Image Src=@($"api/image/movie/{movie?.Id}/q") Width=120 Preview="false"/>;
+						}
+					</SpaceItem>
+					<p>导 演：@movie?.Director</p>
+					<p>类 型：@movie?.Category</p>
+					<p>制作国家/地区：@movie?.Area</p>
+					<p>视频大小：@movie?.Size</p>
+					<p>上传时间：@movie?.UploadTime</p>
+					<p>影片简介：@movie?.Description</p>
+				</Space>
+			</SpaceItem>
+			<SpaceItem Style="width:100%; margin:auto;">
+				<video autoplay controls controlslist="nodownload" style="width:90%; margin-left:5%;">
+					<source src=@($"/api/video/movie/{movie?.Id}")>
+				</video>
+			</SpaceItem>
+		</Space>
 	}
 	else
 	{
-		// 无效的Url
+		<Empty Image="images/movie.svg"
+			   ImageStyle='@("height: 100px")'
+               Style="transform:translateY(150%);">
+			<DescriptionTemplate>
+				<p style="color:#CCC; font-size:16px;">影片未找到，请检查链接是否正确 ~</p>
+			</DescriptionTemplate>
+		</Empty>
 	}
+}
+else if(videoCategory == VideoCategory.Teleplay)
+{
+	if(teleplay != null)
+	{
+
+	}
+	else
+	{
+		<Empty Image="images/teleplay.svg"
+			   ImageStyle='@("height: 100px")'
+               Style="transform:translateY(150%);">
+			<DescriptionTemplate>
+				<p style="color:#CCC; font-size:16px;">影片未找到，请检查链接是否正确 ~</p>
+			</DescriptionTemplate>
+		</Empty>
+	}
+}
+else if(videoCategory == VideoCategory.ShortVideo)
+{
+	if(shortvideo != null)
+	{
+
+	}
+	else
+	{
+		<Empty Image="images/shortvideo.svg"
+				ImageStyle='@("height: 100px")'
+				Style="transform:translateY(150%);">
+			<DescriptionTemplate>
+				<p style="color:#CCC; font-size:16px;">影片未找到，请检查链接是否正确 ~</p>
+			</DescriptionTemplate>
+		</Empty>
+	}
+}
+else
+{
+	<Empty Image="images/error.svg"
+			ImageStyle='@("height: 100px")'
+            Style="transform:translateY(150%);">
+		<DescriptionTemplate>
+			<a href="" style="font-size:16px;">无法播放影片，错误的链接格式 !</a>
+		</DescriptionTemplate>
+	</Empty>
 }
 
 @code {
 	[Parameter]
 	public string? VideoId { get; set; }
 }
+
+<style>
+	#list::-webkit-scrollbar {
+		display: none;
+	}
+</style>

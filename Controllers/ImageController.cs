@@ -33,5 +33,27 @@ namespace LANMovie.Controllers
                 }
             }
         }
+
+
+        [HttpGet("movie/{movieId}/q")]
+        public async Task<IActionResult> GetMovieQRCode(string movieId)
+        {
+            using (var context = new OurDbContext())
+            {
+                var sqlMovieData = new SqlMovieData(context);
+
+                var movie = await sqlMovieData.GetAsync(movieId);
+                var movieQRCode = $"{MovieRootPath}/{movie?.Id}/QRCode.png";
+
+                if ((movie != null) && System.IO.File.Exists(movieQRCode))
+                {
+                    return File(System.IO.File.ReadAllBytes(movieQRCode), $"image/png");
+                }
+                else
+                {
+                    return File(System.IO.File.ReadAllBytes($"Data/Videos/imageNotFound.png"), "image/png");
+                }
+            }
+        }
     }
 }

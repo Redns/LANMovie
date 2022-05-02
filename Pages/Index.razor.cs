@@ -45,18 +45,15 @@ namespace LANMovie.Pages
         readonly MovieConfig movieConfig = GlobalValues.AppConfig?.Data.Video.Movie ?? new MovieConfig(10*1024*1024, 1*1024*1024*1024);
 
 
-        protected async override Task OnInitializedAsync()
+        protected override Task OnInitializedAsync()
         {
             string host = NavigationManager.BaseUri;
             if (!host.Contains("localhost") && !host.Contains("127.0.0.1"))
             {
-                if (File.Exists("wwwroot/connect.png"))
+                if (File.Exists("wwwroot/connect.png") && (QRCoderHelper.QRDecoder("wwwroot/connect.png") != host))
                 {
-                    if(QRCoderHelper.QRDecoder("wwwroot/connect.png") != host)
-                    {
-                        File.Delete("wwwroot/connect.png");
-                        QRCoderHelper.QRCoder(host, "wwwroot/connect.png", "", 5);
-                    }
+                    File.Delete("wwwroot/connect.png");
+                    QRCoderHelper.QRCoder(host, "wwwroot/connect.png", "", 5);
                 }
                 else
                 {
@@ -70,8 +67,10 @@ namespace LANMovie.Pages
                     QRCoderHelper.QRCoder("当使用 localhost/127.0.0.1 访问时，系统不会生成连接二维码!", "wwwroot/connect.png", "", 5);
                 }
             }
-            await base.OnInitializedAsync();
+
+            return base.OnInitializedAsync();
         }
+
 
         /// <summary>
         /// 上传电影
