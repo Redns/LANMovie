@@ -1,6 +1,7 @@
 ﻿using LANMovie.Common;
 using LANMovie.Data.Access;
 using LANMovie.Data.Entities;
+using Microsoft.JSInterop;
 
 namespace LANMovie.Pages
 {
@@ -75,6 +76,46 @@ namespace LANMovie.Pages
             else if(temp == "teleplay") { return VideoCategory.Teleplay; }
             else if(temp == "shortvideo") { return VideoCategory.ShortVideo; }
             else { return VideoCategory.None; }
+        }
+
+
+        /// <summary>
+        /// 下载电影
+        /// </summary>
+        async Task DownloadMovie()
+        {
+            string movieDownloadName = $"{movie?.Name} {movie?.PublishTime}.{FileHelper.GetExtension(movie?.VideoPath ?? "png")}";
+            string movieDownloadUrl = $"{NavigationManager.BaseUri}api/video/movie/{movie?.Id}/d"; 
+            await JS.InvokeVoidAsync("downloadFileFromStream", movieDownloadName, movieDownloadUrl);
+        }
+
+
+        /// <summary>
+        /// 删除电影
+        /// </summary>
+        /// <param name="movieId">电影ID</param>
+        /// <returns></returns>
+        async Task RemoveMovie()
+        {
+            if(movie != null)
+            {
+                using (var context = new OurDbContext())
+                {
+                    var sqlMovieData = new SqlMovieData(context);
+                    if (await sqlMovieData.RemoveAsync(movie))
+                    {
+                        if (Directory.Exists($"Data/Videos/Movies/{movie.Id}"))
+                        {
+                            Directory.Delete($"Data/Videos/Movies/{movie.Id}", true);
+                        }
+                        NavigationManager.NavigateTo("Movies");
+                    }
+                    else
+                    {
+                        await _message.Error($"{movie.Name} {movie.PublishTime} 删除失败!", 2);
+                    }
+                }
+            }
         }
     }
 }

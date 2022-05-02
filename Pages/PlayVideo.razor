@@ -1,8 +1,11 @@
 ﻿@page "/playvideo/{*videoId}"
 
+@using LANMovie.Common
 @using LANMovie.Data.Access
 @using LANMovie.Data.Entities
 
+@inject IJSRuntime JS
+@inject MessageService _message
 @inject NavigationManager NavigationManager
 
 @if (videoCategory == VideoCategory.Movie)
@@ -33,6 +36,25 @@
 				<video autoplay controls controlslist="nodownload" style="width:90%; margin-left:5%;">
 					<source src=@($"/api/video/movie/{movie?.Id}")>
 				</video>
+			</SpaceItem>
+			<SpaceItem Style="width:100%; margin:auto; margin-top:10px;">
+				<Space Style="width:90%; margin-left:5%;">
+					<SpaceItem>
+						<Button Type="@ButtonType.Primary" Style="height:40px; border-radius:8px;">
+							<Space><Icon Type="edit" Theme="outline" Width=20 Height=20 Style="margin-right:10px;"/>编 辑</Space>
+						</Button>
+					</SpaceItem>
+					<SpaceItem>
+						<Button Type="@ButtonType.Primary" Style="height:40px; border-radius:8px;" OnClick=@(async() => await DownloadMovie())>
+							<Space><Icon Type="download" Theme="outline" Width=20 Height=20 Style="margin-right:10px;"/>下 载</Space>
+						</Button>
+					</SpaceItem>
+					<SpaceItem>
+						<Button Type="@ButtonType.Primary" Danger Style="height:40px; border-radius:8px;" OnClick=@(async() => await RemoveMovie())>
+							<Space><Icon Type="delete" Theme="outline" Width=20 Height=20 Style="margin-right:10px;"/>删 除</Space>
+						</Button>
+					</SpaceItem>
+				</Space>
 			</SpaceItem>
 		</Space>
 	}
