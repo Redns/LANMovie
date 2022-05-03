@@ -78,61 +78,56 @@ namespace LANMovie.Pages
         /// <returns></returns>
         async Task UploadMovie()
         {
-            // 创建上传文件夹
-            var uploadDir = FileHelper.GenerateUnitDirName(movieRoot, 8, true);
-            var uploadMovieExt = FileHelper.GetExtension(uploadMovie?.Name ?? "");
-            var uploadMovieCoverExt = FileHelper.GetExtension(uploadMovieCover?.Name ?? "");
+            movie.Id = FileHelper.GenerateUnitDirName(movieRoot, 8, true);
 
-            if (string.IsNullOrEmpty(movie.Name))
-            {
-                _ = _message.Error("电影名称不能为空 !", 1.5);
-                uploadStepCurrent = 0;
-                return;
-            }
+            string uploadMovieName = $"src.{FileHelper.GetExtension(uploadMovie?.Name ?? "")}";
+            string uploadCoverName = $"cover.{FileHelper.GetExtension(uploadMovieCover?.Name ?? "")}";
+            string uploadMoviePath = $"{movieRoot}/{movie.Id}/{uploadMovieName}";
+            string uploadCoverPath = $"{movieRoot}/{movie.Id}/{uploadCoverName}";
+            string uploadCoverTempPath = $"{movieRoot}/{movie.Id}/cover_temp.{FileHelper.GetExtension(uploadMovieCover?.Name ?? "")}";
 
             try
             {
-                // 上传封面(Data/Videos/Movies/{uploadDir}/{cover.xxx})
+                if (string.IsNullOrEmpty(movie.Name))
+                {
+                    uploadStepCurrent = 0;
+                    throw new ArgumentNullException("电影名称不能为空");
+                }
+
                 using (var movieCoverReader = uploadMovieCover?.OpenReadStream(movieConfig.CoverMaxSize))
                 {
-                    if (movieCoverReader != null)
+                    if(movieCoverReader != null)
                     {
-                        using (var movieCoverWriter = new FileStream($"Data/Videos/Movies/{uploadDir}/cover_temp.{uploadMovieCoverExt}", FileMode.Create))
+                        using (var movieCoverWriter = new FileStream(uploadCoverTempPath, FileMode.Create))
                         {
                             await movieCoverReader.CopyToAsync(movieCoverWriter);
                             await movieCoverWriter.FlushAsync();
                         }
 
                         // 裁剪图片尺寸至 1920*1080，之后添加水印
-                        using (var resizeCoverImage = ImageHelper.ImageCut($"Data/Videos/Movies/{uploadDir}/cover_temp.{uploadMovieCoverExt}"))
+                        using (var resizeCoverImage = ImageHelper.ImageCut(uploadCoverTempPath))
                         {
                             if (resizeCoverImage != null)
                             {
                                 ImageHelper.ImageWaterMark(resizeCoverImage, $"{movie.Name} {movie.PublishTime}", leftEdge: 50, bottomEdge: 140, fontSize: 80)
-                                           .WriteToFile($"Data/Videos/Movies/{uploadDir}/cover.{uploadMovieCoverExt}");
+                                           .WriteToFile(uploadCoverPath);
                             }
                         }
 
-                        File.Delete($"Data/Videos/Movies/{uploadDir}/cover_temp.{uploadMovieCoverExt}");
+                        File.Delete(uploadCoverTempPath);
                     }
                     else
                     {
-                        if (Directory.Exists($"{movieRoot}/{movie.Id}"))
-                        {
-                            Directory.Delete($"{movieRoot}/{movie.Id}", true);
-                        }
-
-                        _ = _message.Error($"请选择封面 !", 1.5);
-                        return;
+                        throw new ArgumentNullException("请选择封面");
                     }
                 }
 
-                // 上传视频(Data/Videos/Movies/{uploadDir}/{src.xxx})
-                using (var movieReader = uploadMovie?.OpenReadStream(movieConfig.MaxSize))
+                // 分段上传视频
+                using(var movieReader = uploadMovie?.OpenReadStream(movieConfig.MaxSize))
                 {
-                    if (movieReader != null)
+                    if(movieReader != null)
                     {
-                        using (var movieWriter = new FileStream($"Data/Videos/Movies/{uploadDir}/src.{uploadMovieExt}", FileMode.Create))
+                        using (var movieWriter = new FileStream(uploadMoviePath, FileMode.Create))
                         {
                             int readLen;
                             long readLenTotal = 0;
@@ -151,13 +146,7 @@ namespace LANMovie.Pages
                     }
                     else
                     {
-                        if (Directory.Exists($"{movieRoot}/{movie.Id}"))
-                        {
-                            Directory.Delete($"{movieRoot}/{movie.Id}", true);
-                        }
-
-                        _ = _message.Error($"请选择要上传的视频 !", 1.5);
-                        return;
+                        throw new ArgumentNullException("请选择视频文件");
                     }
                 }
 
@@ -166,43 +155,44 @@ namespace LANMovie.Pages
                 {
                     var sqlMovieData = new SqlMovieData(context);
 
-                    movie.Id = uploadDir;
-                    movie.VideoPath = $"src.{uploadMovieExt}";
+                    movie.VideoPath = uploadMovieName;
                     movie.UploadTime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-                    movie.Cover = $"cover.{uploadMovieCoverExt}";
+                    movie.Cover = uploadCoverName;
                     movie.Size = FileHelper.RebuildFileSize(uploadMovie?.Size ?? 0);
-                    await sqlMovieData.AddAsync(movie);
-                }
-                uploadStepCurrent++;
-            }
-            catch (Exception ex)
-            {
-                var exceptType = ex.GetType();
-                if (exceptType == typeof(IOException))
-                {
-                    if (!File.Exists($"{movieRoot}/{movie.Id}/cover.{uploadMovieCoverExt}"))
-                    {
-                        _ = _message.Error($"封面大小超过{FileHelper.RebuildFileSize(movieConfig.CoverMaxSize)} !", 1.5);
-                    }
-                    else if (!File.Exists($"{movieRoot}/{movie.Id}/src.{uploadMovieExt}"))
-                    {
-                        _ = _message.Error($"视频大小超过{FileHelper.RebuildFileSize(movieConfig.MaxSize)} !", 1.5);
-                    }
-                    else
-                    {
-                        _ = _message.Error($"上传失败, {ex.Message} !", 1.5);
-                    }
-                }
-                else if (exceptType == typeof(NetVips.VipsException))
-                {
-                    _ = _message.Error($"封面处理上传失败, {ex.Message} !", 1.5);
-                }
-                else
-                {
-                    _ = _message.Error($"上传失败, {ex.Message} !", 1.5);
+
+                    _ = sqlMovieData.AddAsync(movie);
                 }
 
-                if (Directory.Exists($"{movieRoot}/{movie.Id}"))
+                uploadStepCurrent = 2;
+            }
+            catch(Exception ex)
+            {
+                var exceptType = ex.GetType();
+                var errorMessage = $"上传失败, 具体原因请查看日志文件 !";
+
+                if (exceptType == typeof(IOException))
+                {
+                    if (!string.IsNullOrEmpty(uploadCoverPath) && !File.Exists(uploadCoverPath))
+                    {
+                        errorMessage = $"封面大小超过{FileHelper.RebuildFileSize(movieConfig.CoverMaxSize)} !";
+                    }
+                    else if (!string.IsNullOrEmpty(uploadMoviePath) && !File.Exists(uploadMoviePath))
+                    {
+                        errorMessage = $"视频大小超过{FileHelper.RebuildFileSize(movieConfig.MaxSize)} !";
+                    }
+                }
+                else if(exceptType == typeof(NetVips.VipsException))
+                {
+                    errorMessage = $"封面图片处理失败, {ex.Message} !";
+                }
+                else if(exceptType == typeof(ArgumentNullException))
+                {
+                    errorMessage = $"上传失败, {(ex as ArgumentNullException)?.ParamName} !";
+                }
+
+                _ = _message.Error(errorMessage, 1.5);
+
+                if (!string.IsNullOrEmpty(movie.Id) && Directory.Exists($"{movieRoot}/{movie.Id}"))
                 {
                     Directory.Delete($"{movieRoot}/{movie.Id}", true);
                 }
