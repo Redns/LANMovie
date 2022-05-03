@@ -1,0 +1,41 @@
+﻿@using LANMovie.Data.Entities
+<Space Direction="DirectionVHType.Vertical">
+	<SpaceItem Style="width:100%; margin:auto;">
+		<video autoplay controls controlslist="nodownload" style="width:90%; margin-left:5%;">
+			<source src=@($"/api/video/movie/{Movie?.Id}")>
+		</video>
+	</SpaceItem>
+	<SpaceItem Style="width:100%; margin:auto; margin-top:10px;">
+		<Space Style="width:90%; margin-left:5%;">
+			<SpaceItem>
+				<Button Type="@ButtonType.Primary" Style="height:40px; border-radius:8px;" OnClick=@EditMovie>
+					<Space><Icon Type="edit" Theme="outline" Width=20 Height=20 Style="margin-right:10px;"/>编 辑</Space>
+				</Button>
+			</SpaceItem>
+			<SpaceItem>
+				<Button Type="@ButtonType.Primary" Style="height:40px; border-radius:8px;" OnClick=@DownloadMovie>
+					<Space><Icon Type="download" Theme="outline" Width=20 Height=20 Style="margin-right:10px;"/>下 载</Space>
+				</Button>
+			</SpaceItem>
+			<SpaceItem>
+				<Button Type="@ButtonType.Primary" Danger Style="height:40px; border-radius:8px;" OnClick=@DeleteMovie>
+					<Space><Icon Type="delete" Theme="outline" Width=20 Height=20 Style="margin-right:10px;"/>删 除</Space>
+				</Button>
+			</SpaceItem>
+		</Space>
+	</SpaceItem>
+</Space>
+
+@code{
+	[Parameter]
+	public MovieEntity Movie { get; set; } = new();
+
+	[Parameter]
+	public EventCallback<MouseEventArgs> EditMovie { get; set; }
+
+	[Parameter]
+	public EventCallback<MouseEventArgs> DownloadMovie { get; set; }
+
+	[Parameter]
+	public EventCallback<MouseEventArgs> DeleteMovie { get; set; }
+}

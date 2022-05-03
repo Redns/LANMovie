@@ -29,12 +29,13 @@ namespace LANMovie.Pages
         /// <returns></returns>
         protected override async Task OnInitializedAsync()
         {
-            using(var context = new OurDbContext())
+            await base.OnInitializedAsync();
+
+            using (var context = new OurDbContext())
             {
                 var sqlMovieData = new SqlMovieData(context);
                 movies = (MovieEntity[])await sqlMovieData.GetAsync();
             }
-            await base.OnInitializedAsync();
         }
     }
 }

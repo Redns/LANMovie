@@ -3,6 +3,9 @@
 @using LANMovie.Common
 @using LANMovie.Data.Access
 @using LANMovie.Data.Entities
+@using LANMovie.Shared.MyDescriptions
+@using LANMovie.Shared.MyForm
+@using LANMovie.Shared.MyVideoPlayer
 
 @inject IJSRuntime JS
 @inject MessageService _message
@@ -14,49 +17,20 @@
 	{
 		<Space Direction="DirectionVHType.Vertical" Style="overflow:scroll; overflow-x:hidden; height:100%; max-height:650px;" Id="list">
 			<SpaceItem>
-				<Space Direction="DirectionVHType.Vertical" Style="width:90%; margin-left:5%;">
-					<SpaceItem>
-						<Popover ContentTemplate="@_content" Placement=@Placement.RightBottom>
-							<h3 style="cursor:pointer; color:#1890ff;">@($"{movie?.Name} ({movie?.PublishTime})")</h3>
-						</Popover>
-						@code
-						{
-							RenderFragment _content = @<Image Src=@($"api/image/movie/{movie?.Id}/q") Width=120 Preview="false"/>;
-						}
-					</SpaceItem>
-					<p>导 演：@movie?.Director</p>
-					<p>类 型：@movie?.Category</p>
-					<p>制作国家/地区：@movie?.Area</p>
-					<p>视频大小：@movie?.Size</p>
-					<p>上传时间：@movie?.UploadTime</p>
-					<p>影片简介：@movie?.Description</p>
-				</Space>
+				<MovieDescriptions Movie="@movie"/>
 			</SpaceItem>
 			<SpaceItem Style="width:100%; margin:auto;">
-				<video autoplay controls controlslist="nodownload" style="width:90%; margin-left:5%;">
-					<source src=@($"/api/video/movie/{movie?.Id}")>
-				</video>
-			</SpaceItem>
-			<SpaceItem Style="width:100%; margin:auto; margin-top:10px;">
-				<Space Style="width:90%; margin-left:5%;">
-					<SpaceItem>
-						<Button Type="@ButtonType.Primary" Style="height:40px; border-radius:8px;">
-							<Space><Icon Type="edit" Theme="outline" Width=20 Height=20 Style="margin-right:10px;"/>编 辑</Space>
-						</Button>
-					</SpaceItem>
-					<SpaceItem>
-						<Button Type="@ButtonType.Primary" Style="height:40px; border-radius:8px;" OnClick=@(async() => await DownloadMovie())>
-							<Space><Icon Type="download" Theme="outline" Width=20 Height=20 Style="margin-right:10px;"/>下 载</Space>
-						</Button>
-					</SpaceItem>
-					<SpaceItem>
-						<Button Type="@ButtonType.Primary" Danger Style="height:40px; border-radius:8px;" OnClick=@(async() => await RemoveMovie())>
-							<Space><Icon Type="delete" Theme="outline" Width=20 Height=20 Style="margin-right:10px;"/>删 除</Space>
-						</Button>
-					</SpaceItem>
-				</Space>
+				<MoviePlayer Movie="@movie" EditMovie=@(() => visiable_movieEditModal = true) DownloadMovie=@(async() => await DownloadMovie()) DeleteMovie=@(async() => await RemoveMovie())/>
 			</SpaceItem>
 		</Space>
+		
+		<Modal Title=@($"{movie.Name} ({movie.PublishTime})")
+				Visible="@visiable_movieEditModal"
+				OnOk=@(async() => await SaveMovieEdit())
+				OnCancel=@(() => visiable_movieEditModal = false)
+				Style="width:90%; margin:auto; max-width:380px;">
+				<MovieForm Movie="@movie"/>
+		</Modal>
 	}
 	else
 	{

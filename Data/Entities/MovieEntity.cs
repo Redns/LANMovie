@@ -2,38 +2,16 @@
 
 namespace LANMovie.Data.Entities
 {
-    public class MovieEntity
+    public class MovieEntity : VideoEntity
     {
-        // 8位随机字符串
-        public string Id { get; set; } = string.Empty;
-
-        [DisplayName("名 称")]
-        public string Name { get; set; } = string.Empty;
-
-        [DisplayName("简 介")]
-        public string Description { get; set; } = string.Empty;
-
-        // 视频相对路径为 Data/Videos/Movies/{Id}/{VideoPath}
-        public string VideoPath { get; set; } = string.Empty;
-
         [DisplayName("上传时间")]
-        public string UploadTime { get; set; } = string.Empty;
-
-        [DisplayName("发布时间")]
-        public string PublishTime { get; set; } = string.Empty;
-
-        // 封面图片相对路径为 Data/Videos/Movies/{Id}/{Cover}
-        [DisplayName("封 面")]
-        public string Cover { get; set; } = string.Empty;
+        public string UploadTime { get; set; } = $"{DateTime.Now.Year}";
 
         [DisplayName("导演")]
         public string Director { get; set; } = string.Empty;
 
         [DisplayName("类 型")]
         public MovieCategory Category { get; set; } = MovieCategory.Other;
-
-        [DisplayName("地 区")]
-        public string Area { get; set; } = string.Empty;
 
         [DisplayName("大 小")]
         public string Size { get; set; } = string.Empty;

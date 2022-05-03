@@ -1,0 +1,84 @@
+﻿@using LANMovie.Data.Entities
+
+<Space>
+    <SpaceItem Style="width:100%;">名 称</SpaceItem>
+    <SpaceItem Style="width:100%; margin-left:0;">
+        <Input @bind-Value="@Movie.Name" Style="width:260px; border-radius:5px;"/>
+    </SpaceItem>
+</Space>
+<Space Style="margin-top:25px;">
+    <SpaceItem>年 份</SpaceItem>
+    <SpaceItem>
+        <DatePicker @bind-Value="@PublishTime" TValue="DateTime" Picker="@DatePickerType.Year" Style="width:260px; border-radius:5px;"/>
+    </SpaceItem>
+</Space>
+<Space Style="margin-top:25px;">
+    <SpaceItem>类 型</SpaceItem>
+    <SpaceItem>
+        <Select @bind-Value="@Movie.Category"
+                DefaultValue="@MovieCategory.Other"
+		        TItemValue="MovieCategory"
+                TItem="string"
+                LabelInValue="true"
+		        Style="width:260px;">
+		    <SelectOptions>
+			    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Drama Label="情 节"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Comedy Label="喜 剧"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Romantic Label="爱 情"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Action Label="动 作"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.MartialArts Label="武 侠"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.KungFu Label="功 夫"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.War Label="战 争"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Thrill Label="悬 疑"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Horror Label="恐 怖"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Fantasy Label="神 幻"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Scifi Label="科 幻"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Ghost Label="鬼 片"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.NewYearCelebration Label="贺 岁"/>
+                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Other Label="其 它"/>
+		    </SelectOptions>
+        </Select>
+    </SpaceItem>
+</Space>
+<Space Style="margin-top:25px;">
+    <SpaceItem>简 介</SpaceItem>
+    <SpaceItem>
+        <TextArea @bind-Value="@Movie.Description" Placeholder="请输入影片简介, 最多200字" Id="textArea-movieDescription" Style="width:260px; height:120px; border-radius:5px;" DefaultToEmptyString=true/>
+    </SpaceItem>
+</Space>
+<Space Style="margin-top:25px;">
+    <SpaceItem>导 演</SpaceItem>
+    <SpaceItem>
+        <Input @bind-Value="@Movie.Director" Style="width:260px; border-radius:5px;"/>
+    </SpaceItem>
+</Space>
+<Space Style="margin-top:25px;">
+    <SpaceItem>地 区</SpaceItem>
+    <SpaceItem>
+        <Input @bind-Value="@Movie.Area" Style="width:260px; border-radius:5px;"/>
+    </SpaceItem>
+</Space>
+
+@code{
+    [Parameter]
+    public MovieEntity Movie { get; set; } = new MovieEntity();
+
+    DateTime _PublishTime = DateTime.Now;
+    public DateTime PublishTime 
+    { 
+        get { return _PublishTime; }
+        set
+        {
+            _PublishTime = value;
+            Movie.PublishTime = _PublishTime.Year.ToString();
+        } 
+    }
+}
+
+<style>
+    #textArea-movieDescription::-webkit-scrollbar {
+        display: none;
+        overflow:scroll;
+        overflow-x:hidden;
+    }
+</style>

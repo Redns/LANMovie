@@ -7,13 +7,17 @@ namespace LANMovie.Pages
 {
     partial class PlayVideo
     {
-        static MovieEntity? movie;                                 
-        static TeleplayEntity? teleplay;                           
-        static ShortVideoEntity? shortvideo;                       
+        MovieEntity? movie;
+        bool visiable_movieEditModal = false;
+
+        TeleplayEntity? teleplay;                           
+        ShortVideoEntity? shortvideo;                       
         VideoCategory videoCategory = VideoCategory.None;
 
         protected override async Task OnInitializedAsync()
         {
+            await base.OnInitializedAsync();
+
             if (!string.IsNullOrEmpty(VideoId))
             {
                 // 分割页面URL
@@ -22,7 +26,7 @@ namespace LANMovie.Pages
                 // 短视频：shortvideo/{svId}
                 var videoUrls = VideoId.Split("/"); 
 
-                videoCategory = CheckVideoCategory(videoUrls[0]);
+                videoCategory = VideoEntity.ParseVideoCategory(videoUrls[0]);
                 if(videoCategory == VideoCategory.Movie)
                 {
                     using (var context = new OurDbContext())
@@ -65,17 +69,31 @@ namespace LANMovie.Pages
 
                 }
             }
-            await base.OnInitializedAsync();
         }
 
 
-        VideoCategory CheckVideoCategory(string videoCategory)
+        /// <summary>
+        /// 保持电影修改
+        /// </summary>
+        /// <returns></returns>
+        async Task SaveMovieEdit()
         {
-            var temp = videoCategory.ToLower();
-            if(temp == "movie") { return VideoCategory.Movie; }
-            else if(temp == "teleplay") { return VideoCategory.Teleplay; }
-            else if(temp == "shortvideo") { return VideoCategory.ShortVideo; }
-            else { return VideoCategory.None; }
+            if(movie != null)
+            {
+                using (var context = new OurDbContext())
+                {
+                    var sqlMovieData = new SqlMovieData(context);
+                    if (await sqlMovieData.UpdateAsync(movie))
+                    {
+                        _ = _message.Success("修改成功 !", 1.5);
+                    }
+                    else
+                    {
+                        _ = _message.Error("修改失败 !", 1.5);
+                    }
+                }
+            }
+            visiable_movieEditModal = false;
         }
 
 

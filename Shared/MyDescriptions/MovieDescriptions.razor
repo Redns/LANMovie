@@ -1,0 +1,25 @@
+﻿@using LANMovie.Data.Entities
+
+<Space Direction="DirectionVHType.Vertical" Style="width:90%; margin-left:5%;">
+	<SpaceItem>
+		<Popover Placement=@Placement.RightBottom>
+			<ContentTemplate>
+				<Image Src=@($"api/image/movie/{Movie?.Id}/q") Width=120 Preview="false"/>
+			</ContentTemplate>
+			<ChildContent>
+				<h3 style="cursor:pointer; color:#1890ff;">@($"{Movie?.Name} ({Movie?.PublishTime})")</h3>
+			</ChildContent>
+		</Popover>
+	</SpaceItem>
+	<p>导 演：@Movie?.Director</p>
+	<p>类 型：@Movie?.Category</p>
+	<p>制作国家/地区：@Movie?.Area</p>
+	<p>视频大小：@Movie?.Size</p>
+	<p>上传时间：@Movie?.UploadTime</p>
+	<p>影片简介：@Movie?.Description</p>
+</Space>
+
+@code{
+	[Parameter]
+	public MovieEntity Movie { get; set; } = new();
+}

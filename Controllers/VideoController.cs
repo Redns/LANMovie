@@ -114,7 +114,7 @@ namespace LANMovie.Controllers
             {
                 var sqlMovieData = new SqlMovieData(context);
                 var movie = sqlMovieData.Get(movieId);
-                if ((movie != null) && (!string.IsNullOrEmpty(movie.VideoPath)))
+                if ((movie != null) && (!string.IsNullOrEmpty(movie.VideoPath)) && System.IO.File.Exists($"Data/Videos/Movies/{movie.Id}/{movie.VideoPath}"))
                 {
                     return new PhysicalFileResult($"{Directory.GetCurrentDirectory()}/Data/Videos/Movies/{movie.Id}/{movie.VideoPath}", $"video/{FileHelper.GetExtension(movie.VideoPath)}");
                 }

@@ -1,18 +1,12 @@
 ﻿@page "/"
 
 @using LANMovie.Data.Entities
+@using LANMovie.Shared.MyForm
 
+@inject MessageService _message
 @inject NavigationManager NavigationManager
 
 <PageTitle>首 页</PageTitle>
-
-<style>
-    #textArea-movieDescription::-webkit-scrollbar {
-        display: none;
-        overflow:scroll;
-        overflow-x:hidden;
-    }
-</style>
 
 @if (emptyShown)
 {
@@ -58,64 +52,7 @@ else
         {
             <br/><br/>
             <div style="position:center; width:95%; max-width:500px; margin:auto;">
-                <Space>
-                    <SpaceItem Style="width:100%;">名 称</SpaceItem>
-                    <SpaceItem Style="width:100%; margin-left:0;">
-                        <Input @bind-Value="@movie.Name" Style="width:260px; border-radius:5px;"/>
-                    </SpaceItem>
-                </Space>
-                <Space Style="margin-top:25px;">
-                    <SpaceItem>年 份</SpaceItem>
-                    <SpaceItem>
-                        <DatePicker @bind-Value="@publishDate" TValue="DateTime" Picker="@DatePickerType.Year" Style="width:260px; border-radius:5px;"/>
-                    </SpaceItem>
-                </Space>
-                <Space Style="margin-top:25px;">
-                    <SpaceItem>类 型</SpaceItem>
-                    <SpaceItem>
-                        <Select @bind-Value="@movie.Category"
-                                DefaultValue="@MovieCategory.Other"
-		                        TItemValue="MovieCategory"
-                                TItem="string"
-                                LabelInValue="true"
-		                        Style="width:260px;">
-		                    <SelectOptions>
-			                    <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Drama Label="情 节"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Comedy Label="喜 剧"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Romantic Label="爱 情"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Action Label="动 作"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.MartialArts Label="武 侠"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.KungFu Label="功 夫"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.War Label="战 争"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Thrill Label="悬 疑"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Horror Label="恐 怖"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Fantasy Label="神 幻"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Scifi Label="科 幻"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Ghost Label="鬼 片"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.NewYearCelebration Label="贺 岁"/>
-                                <SelectOption TItemValue="MovieCategory" TItem="string" Value=MovieCategory.Other Label="其 它"/>
-		                    </SelectOptions>
-                        </Select>
-                    </SpaceItem>
-                </Space>
-                <Space Style="margin-top:25px;">
-                    <SpaceItem>简 介</SpaceItem>
-                    <SpaceItem>
-                        <TextArea @bind-Value="@movie.Description" Placeholder="请输入影片简介, 最多200字" Id="textArea-movieDescription" Style="width:260px; height:120px; border-radius:5px;" DefaultToEmptyString=true/>
-                    </SpaceItem>
-                </Space>
-                <Space Style="margin-top:25px;">
-                    <SpaceItem>导 演</SpaceItem>
-                    <SpaceItem>
-                        <Input @bind-Value="@movie.Director" Style="width:260px; border-radius:5px;"/>
-                    </SpaceItem>
-                </Space>
-                <Space Style="margin-top:25px;">
-                    <SpaceItem>地 区</SpaceItem>
-                    <SpaceItem>
-                        <Input @bind-Value="@movie.Area" Style="width:260px; border-radius:5px;"/>
-                    </SpaceItem>
-                </Space>
+                <MovieForm Movie="@movie"/>
                 <br/>
                 <Button Type="@ButtonType.Primary" OnClick="(() => { uploadStepCurrent++; })" Style="margin-top:25px; margin-left:40px; border-radius:5px;">下一步</Button>
             </div>
@@ -158,7 +95,29 @@ else
     }
     else if(uploadVideoCategory == VideoCategory.Teleplay)
     {
+        if(uploadStepCurrent == 0)
+        {
+            <br/><br/>
+            <div style="position:center; width:95%; max-width:500px; margin:auto;">
+                <Select @bind-Value="@uploadVideoCategory"
+                            DefaultValue="@VideoCategory.Movie"
+		                    TItemValue="VideoCategory"
+                            TItem="string"
+                            LabelInValue="true"
+		                    Style="width: 90px;">
+		                <SelectOptions>
+			                <SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.Movie Label="电 影"/>
+                            <SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.Teleplay Label="电视剧"/>
+                            <SelectOption TItemValue="VideoCategory" TItem="string" Value=VideoCategory.ShortVideo Label="短视频"/>
+		                </SelectOptions>
+                    </Select>
+                <Button Type="@ButtonType.Primary" OnClick="(() => { uploadStepCurrent++; })" Style="margin-top:25px; margin-left:40px; border-radius:5px;">下一步</Button>
+            </div>
+        }
+        else if(uploadStepCurrent == 1)
+        {
             
+        }
     }
     else
     {
