@@ -1,7 +1,7 @@
 ﻿@page "/"
 
 @using LANMovie.Data.Entities
-@using LANMovie.Shared.MyForm
+@using LANMovie.Shared.MyForms
 
 @inject MessageService _message
 @inject NavigationManager NavigationManager
@@ -67,7 +67,7 @@ else
                 <Progress Percent=@ProgressPercent StrokeWidth=progress_stroke_width ShowInfo=progress_showInfo/>
                 <Space Style="margin-top:30px;">
                     <SpaceItem>
-                        <Button Type="@ButtonType.Primary" OnClick="(() => { uploadStepCurrent--; })" Style="border-radius:5px;">上一步</Button>
+                        <Button Type="@ButtonType.Primary" OnClick="(() => { uploadStepCurrent--; uploadMovieCover = null; uploadMovie = null; })" Style="border-radius:5px;">上一步</Button>
                     </SpaceItem>
                     <SpaceItem>
                         <Button Type="@ButtonType.Primary" OnClick=@UploadMovie Style="border-radius:5px;">提 交</Button>
